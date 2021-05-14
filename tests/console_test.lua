@@ -3,7 +3,11 @@ tolk = require "tolk"
 answerMap = setmetatable(
 {
 ["yes"]=true,
-["no"]=false
+["y"]=true,
+[1]=true,
+["no"]=false,
+["n"]=false,
+[0]=false
 },
 {
 __index = function(self, value)
@@ -71,6 +75,18 @@ while true do
 local answer = io.read()
 if answer == "exit" then goto terminate end
 local command, text = answer:match("^(%w+)%s(.+)")
+if text == nil then
+if answer ~= "" then
+tolk.Output(answer, interrupt)
+else
+print("Empty text input.")
+goto next
+end
+end
+if text and text:match("%w+") == nil then
+print("Unsupported text symbols.")
+goto next
+end
 if command == "output" then
 tolk.Output(text, interrupt)
 elseif command == "speak" then
@@ -88,6 +104,7 @@ end
 else
 tolk.Output(answer, interrupt)
 end
+::next::
 end
 else
 error("Unable to load the Tolk library... Suddenly...")
