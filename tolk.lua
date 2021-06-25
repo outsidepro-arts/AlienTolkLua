@@ -142,11 +142,15 @@ function Tolk.HasBraille() return (tolkdll.Tolk_HasBraille() == 1) end
 tolkdll.Tolk_Output:types("int", "pointer", "int")
 function Tolk.Output(str, interrupt)
 if str == nil then error("The str must be passed.") end
-interrupt = interrupt or 0
+interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
+if presize == #str then
+return (tolkdll.Tolk_Output(str, toint[interrupt]) == 1)
+else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
 return (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
+end
 end
 
 --  Name:         Tolk_Speak
@@ -157,11 +161,15 @@ end
 tolkdll.Tolk_Speak:types("int", "pointer", "int")
 function Tolk.Speak(str, interrupt)
 if str == nil then error("The str must be passed.") end
-interrupt = interrupt or 0
+interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
+if presize == #str then
+return (tolkdll.Tolk_Speak(str, toint[interrupt]) == 1)
+else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
 return (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
+end
 end
 
 --  Name:         Tolk_Braille
@@ -172,9 +180,13 @@ tolkdll.Tolk_Braille:types("int", "pointer")
 function Tolk.Braille(str)
 if str == nil then error("The str must be passed.") end
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
+if presize == #str then
+return (tolkdll.Tolk_Braille(str) == 1)
+else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
 return (tolkdll.Tolk_Braille(buf:topointer()) == 1)
+end
 end
 
 --  Name:         Tolk_IsSpeaking
