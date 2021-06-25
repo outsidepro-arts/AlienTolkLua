@@ -4,27 +4,16 @@ gui.SetGlobal("UTF8MODE", "Yes")
 
 checkLoadedBtn = gui.button{title="Check Tolk loading status"}
 function checkLoadedBtn:action(	)
-local states = {[true]="loaded", [false]="not loaded"}
-local result = tolk.IsLoaded()
-local msg = string.format("Tolk library now is %s!", ({[false]="not loaded", [true]="loaded"})[result])
-if tolk.HasSpeech() then
-msg = msg..'\nTolk can send a text to speech synthesizer.'
-else
-msg = msg..'\nTolk cannot send a text to speech synthesizer.'
-end
-if tolk.HasBraille() then
-msg = msg..'\nTolk can send a text to braille display.'
-else
-msg = msg..'\nTolk cannot send a text to braille display.'
-end
+local msg = string.format("Tolk library now is %s!", ({[false]="not loaded", [true]="loaded"})[tolk.IsLoaded()])
+msg = msg..string.format('\nTolk %s send a text to speech synthesizer.', ({[true]="can",[false]="cannot"})[tolk.HasSpeech()])
+msg = msg..string.format('\nTolk %s send a text to braille display.', ({[true]="can",[false]="cannot"})[tolk.HasBraille()])
 gui.Message("Tolk library check", msg)
 return gui.DEFAULT
 end
 
 detectSRBtn = gui.button{title="Detect currently running screenreader"}
 function detectSRBtn:action()
-local result = tolk.DetectScreenReader()
-gui.Message("Tolk library check", string.format("The currently running screenreader is %s.", result))
+gui.Message("Tolk library check", string.format("The currently running screenreader is %s.", tolk.DetectScreenReader()))
 return gui.DEFAULT
 end
 
