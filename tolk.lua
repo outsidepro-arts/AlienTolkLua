@@ -117,7 +117,9 @@ local presize = wkernel.WideCharToMultiByte(65001, 0, ret, -1, nil, 0, nil, nil)
 if presize == 0 then return nil end
 local buf = alien.buffer(presize)
 local bufsize = wkernel.WideCharToMultiByte(65001, 0, ret, -1, buf:topointer(), presize, nil, nil)
-return buf:tostring(bufsize-1)
+local result = buf:tostring(bufsize-1)
+buf = nil
+return result
 end
 
 --  Name:         Tolk_HasSpeech
@@ -144,13 +146,11 @@ function Tolk.Output(str, interrupt)
 if str == nil then error("The str must be passed.") end
 interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-if presize == #str then
-return (tolkdll.Tolk_Output(str, toint[interrupt]) == 1)
-else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
-end
+local result = (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
+buf = nil
+return result
 end
 
 --  Name:         Tolk_Speak
@@ -163,13 +163,11 @@ function Tolk.Speak(str, interrupt)
 if str == nil then error("The str must be passed.") end
 interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-if presize == #str then
-return (tolkdll.Tolk_Speak(str, toint[interrupt]) == 1)
-else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
-end
+local result = (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
+buf = nil
+return result
 end
 
 --  Name:         Tolk_Braille
@@ -180,13 +178,11 @@ tolkdll.Tolk_Braille:types("int", "pointer")
 function Tolk.Braille(str)
 if str == nil then error("The str must be passed.") end
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-if presize == #str then
-return (tolkdll.Tolk_Braille(str) == 1)
-else
 local buf = alien.buffer(presize)
 local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Braille(buf:topointer()) == 1)
-end
+local result = (tolkdll.Tolk_Braille(buf:topointer()) == 1)
+buf = nil
+return result
 end
 
 --  Name:         Tolk_IsSpeaking
