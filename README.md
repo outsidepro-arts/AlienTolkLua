@@ -1,4 +1,11 @@
 # TolkLua #
+# Archived #
+Attention! This wrapper no longer supported. There was too many unexpected crashes and memory leaks beeing happened due the Alien unstability and i've just tired of fix this.
+Anyway, this repo still be available for reading that anyone will able able tolook at the example to work with Alien library. 
+Thanks!
+
+* * *)
+
 TolkLua is a Lua wrapper for [Tolk library](https://github.com/dkager/tolk). Here is fully provided all API of.
 ## Please note ##
 TolkLua uses [Alien library](https://github.com/mascarenhas/alien) for loading main Tolk dynamic library, so you have to Alien be installed in your Lua distributive.
