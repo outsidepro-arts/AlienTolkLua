@@ -92,7 +92,7 @@ Tolk.Unload = tolkdll.Tolk_Unload
 --  Returns:      None.
 tolkdll.Tolk_TrySAPI:types("void", "int")
 function Tolk.TrySAPI(trySAPI)
-if trySAPI == nil then error("The trySAPI must be passed.") end
+assert(trySAPI ~= nil, "The trySAPI must be passed.")
  return (tolkdll.Tolk_TrySAPI(toint[trySAPI]) == 1)
 end
 
@@ -102,7 +102,7 @@ end
 --  Returns:      None.
 tolkdll.Tolk_PreferSAPI:types("void", "int")
 function Tolk.PreferSAPI(preferSAPI)
-if preferSAPI == nil then error("The preferSAPI must be passed.") end
+assert(preferSAPI ~= nil, "The preferSAPI must be passed.")
 return (tolkdll.Tolk_PreferSAPI(toint[preferSAPI]) == 1)
 end
 
@@ -115,11 +115,9 @@ function Tolk.DetectScreenReader()
 local ret = tolkdll.Tolk_DetectScreenReader()
 local presize = wkernel.WideCharToMultiByte(65001, 0, ret, -1, nil, 0, nil, nil)
 if presize == 0 then return nil end
-local buf = alien.buffer(presize)
-local bufsize = wkernel.WideCharToMultiByte(65001, 0, ret, -1, buf:topointer(), presize, nil, nil)
-local result = buf:tostring(bufsize-1)
-buf = nil
-return result
+local buf = alien.buffer(presize+1)
+ wkernel.WideCharToMultiByte(65001, 0, ret, -1, buf:topointer(), presize, nil, nil)
+return buf:tostring()
 end
 
 --  Name:         Tolk_HasSpeech
@@ -143,14 +141,12 @@ function Tolk.HasBraille() return (tolkdll.Tolk_HasBraille() == 1) end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Output:types("int", "pointer", "int")
 function Tolk.Output(str, interrupt)
-if str == nil then error("The str must be passed.") end
+assert(str, "The str must be passed.")
 interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize)
-local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-local result = (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
-buf = nil
-return result
+local buf = alien.buffer(presize*2+2)
+wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
+return (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
 end
 
 --  Name:         Tolk_Speak
@@ -160,14 +156,12 @@ end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Speak:types("int", "pointer", "int")
 function Tolk.Speak(str, interrupt)
-if str == nil then error("The str must be passed.") end
+assert(str, "The str must be passed.")
 interrupt = interrupt or false
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize)
-local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-local result = (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
-buf = nil
-return result
+local buf = alien.buffer(presize*2+2)
+wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
+return (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
 end
 
 --  Name:         Tolk_Braille
@@ -176,13 +170,11 @@ end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Braille:types("int", "pointer")
 function Tolk.Braille(str)
-if str == nil then error("The str must be passed.") end
+assert(str, "The str must be passed.")
 local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize)
-local bufsize = wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-local result = (tolkdll.Tolk_Braille(buf:topointer()) == 1)
-buf = nil
-return result
+local buf = alien.buffer(presize*2+2)
+wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
+return (tolkdll.Tolk_Braille(buf:topointer()) == 1)
 end
 
 --  Name:         Tolk_IsSpeaking
