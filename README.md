@@ -1,7 +1,6 @@
-# Archived #
-Attention! This wrapper no longer supported. There was too many unexpected crashes and memory leaks beeing happened due the Alien unstability and i've just tired of fix this.
-Anyway, this repo still be available for reading that anyone will able able tolook at the example to work with Alien library. 
-Thanks!
+# Archived? Or not? #
+At current time, not. I've decided to unarchive this repository because I've examined Lua about memory leaks (Relly, that's is not problem for this) more and have talked with smart people about strings conversion. Finally, I could rewrite the wrapper  and now it works ideally.
+Anyway, I don't know what may I propose more, so it final wrapper version and it still might serve as an example of Alien library interractions.
 
 # TolkLua #
 TolkLua is a Lua wrapper for [Tolk library](https://github.com/dkager/tolk). Here is fully provided all API of.
