@@ -27,16 +27,8 @@ end
 end
 })
 
--- Let check any alien library copy
-local alien = nil
-if package.loaded.alien then
-alien = package.loaded.alien
-elseif package.loaded.alien_c then
--- This is non-wrapped alien library. We freely can use this because we don't use any specific functions from
-alien = package.loaded.alien_c
-else
-alien = require "alien_c"
-end
+-- Loading Alien
+local alien = require "alien_c"
 
 -- Two WinAPI functions from kernel32
 -- We need this because Tolk library processes wchar-t type
