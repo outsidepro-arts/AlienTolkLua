@@ -10,63 +10,77 @@ All methods are presented in needed type so you can wait the boolean types in ca
 I wrote this wrapper using Lua 5.3, but you can try to another versions of Lua interpreter. Here is no specific operands used, so I think it mus be runnen without any fixes. But I'm not sure.
 Please note that this wrapper can use already loaded Alien library, so you don't need to worry about superfluous Alien copies loading.
 I will comment every function using official Tolk header comments
-]]--
+]] --
 
--- Metatable for converting any value to int
-local toint = setmetatable({[false]=0, [true]=1},
-{__index = function(self, value)
-if tonumber(value) then
-return tonumber(value)
--- IUP compatibility
-elseif value:lower() == "on" or value:lower() == "off" then
-return ({["on"]=1, ["off"]=0})[value:lower()]
-else
-error(string.format("toint error: expected any value which covertable to integer (boolean, number or string with digits or IUP states value, got value %s).", value))
-return nil
+-- Function for converting any expected value to integer which C-library waits as boolean
+local function cBool(value)
+	if type(value) ~= "nil" then
+		-- Standart boolean conversion
+		local booleans = { [true] = 1, [false] = 0 }
+		-- IUP compatibility for some cases
+		local iups = { ["on"] = 1, ["off"] = 0 }
+		return booleans[value] or iups[string.lower(value)] or tonumber(value)
+	end
 end
-end
-})
 
 -- Loading Alien
-local alien = require "alien_c"
+local alien = require "alien"
 
 -- Two WinAPI functions from kernel32
 -- We need this because Tolk library processes wchar-t type
 local wkernel = alien.load("kernel32")
 wkernel.WideCharToMultiByte:types(
-"int",
-"uint",
-"ulong",
-"pointer",
-"int",
-"pointer",
-"int",
-"pointer",
-"pointer"
+	"int",
+	"uint",
+	"ulong",
+	"pointer",
+	"int",
+	"pointer",
+	"int",
+	"pointer",
+	"pointer"
 )
 wkernel.MultiByteToWideChar:types(
-"int",
-"uint",
-"ulong",
-"string",
-"int",
-"pointer",
-"int"
-) 
+	"int",
+	"uint",
+	"ulong",
+	"string",
+	"int",
+	"pointer",
+	"int"
+)
 
-local tolkdll = alien.load("tolk.dll")
+-- Simplest way to convert the widechar string to multibyte  and back versa
+local function wstring(obj)
+	if type(obj) == "userdata" then
+		-- No extra checks here because we are confident the correct types passed
+		local presize = wkernel.WideCharToMultiByte(65001, 0, obj, -1, nil, 0, nil, nil)
+		if presize == 0 then return nil end
+		local buf = alien.buffer(presize + 1)
+		wkernel.WideCharToMultiByte(65001, 0, obj, -1, buf:topointer(), presize, nil, nil)
+		return buf:tostring()
+	else
+		assert(tostring(obj), "toString conversion error") -- Remind that need real string or something like here
+		local presize = wkernel.MultiByteToWideChar(65001, 0, obj, -1, NULL, 0)
+		local buf = alien.buffer(presize * 2 + 2)
+		wkernel.MultiByteToWideChar(65001, 0, obj, -1, buf:topointer(), presize)
+		return buf:topointer()
+	end
+end
+
+local tolkdll = alien.load("tolk")
 local Tolk = {}
 
- --  Name:         Tolk_Load
- --  Description:  Initializes Tolk by loading and initializing the screen reader drivers and setting the current screen reader driver, provided at least one of the supported screen readers is active. Also initializes COM if it has not already been initialized on the calling thread. Calling this function more than once will only initialize COM. You should call this function before using the functions below, though for convenience it is valid to call them at any time. Use the return value or Tolk_IsLoaded to determine whether or not Tolk has been initialized. This function does not return a value, as a screen reader driver failing to load is interpreted as that screen reader being unavailable.
- --  Parameters:   None.
- --  Returns:      None.
+--  Name:         Tolk_Load
+--  Description:  Initializes Tolk by loading and initializing the screen reader drivers and setting the current screen reader driver, provided at least one of the supported screen readers is active. Also initializes COM if it has not already been initialized on the calling thread. Calling this function more than once will only initialize COM. You should call this function before using the functions below, though for convenience it is valid to call them at any time. Use the return value or Tolk_IsLoaded to determine whether or not Tolk has been initialized. This function does not return a value, as a screen reader driver failing to load is interpreted as that screen reader being unavailable.
+--  Parameters:   None.
+--  Returns:      None.
 tolkdll.Tolk_Load:types("void")
 Tolk.Load = tolkdll.Tolk_Load
 
 --  Name:         Tolk_IsLoaded
- --  Description:  Tests if Tolk has been initialized. You should initialize Tolk by calling Tolk_Load before using the functions below, though for convenience it is valid to call them at any time.
- --  Parameters:   None.
+--  Description:  Tests if Tolk has been initialized. You should initialize Tolk by calling Tolk_Load before using the functions below, though for convenience it is valid to call them at any time.
+--  Parameters:   None.
 --  Returns:      true if Tolk has been initialized, false otherwise.
 tolkdll.Tolk_IsLoaded:types("int")
 function Tolk.IsLoaded() return (tolkdll.Tolk_IsLoaded() == 1) end
@@ -84,8 +98,8 @@ Tolk.Unload = tolkdll.Tolk_Unload
 --  Returns:      None.
 tolkdll.Tolk_TrySAPI:types("void", "int")
 function Tolk.TrySAPI(trySAPI)
-assert(trySAPI ~= nil, "The trySAPI must be passed.")
- return (tolkdll.Tolk_TrySAPI(toint[trySAPI]) == 1)
+	assert(trySAPI ~= nil, "The trySAPI must be passed.")
+	return (tolkdll.Tolk_TrySAPI(cBool(trySAPI)) == 1)
 end
 
 --  Name:         Tolk_PreferSAPI
@@ -94,8 +108,8 @@ end
 --  Returns:      None.
 tolkdll.Tolk_PreferSAPI:types("void", "int")
 function Tolk.PreferSAPI(preferSAPI)
-assert(preferSAPI ~= nil, "The preferSAPI must be passed.")
-return (tolkdll.Tolk_PreferSAPI(toint[preferSAPI]) == 1)
+	assert(preferSAPI ~= nil, "The preferSAPI must be passed.")
+	return (tolkdll.Tolk_PreferSAPI(cBool(preferSAPI)) == 1)
 end
 
 --  Name:         Tolk_DetectScreenReader
@@ -104,12 +118,7 @@ end
 --  Returns:      A  string representation of the common name on success, NULL otherwise.
 tolkdll.Tolk_DetectScreenReader:types("pointer")
 function Tolk.DetectScreenReader()
-local ret = tolkdll.Tolk_DetectScreenReader()
-local presize = wkernel.WideCharToMultiByte(65001, 0, ret, -1, nil, 0, nil, nil)
-if presize == 0 then return nil end
-local buf = alien.buffer(presize+1)
- wkernel.WideCharToMultiByte(65001, 0, ret, -1, buf:topointer(), presize, nil, nil)
-return buf:tostring()
+	return wstring(tolkdll.Tolk_DetectScreenReader())
 end
 
 --  Name:         Tolk_HasSpeech
@@ -133,12 +142,9 @@ function Tolk.HasBraille() return (tolkdll.Tolk_HasBraille() == 1) end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Output:types("int", "pointer", "int")
 function Tolk.Output(str, interrupt)
-assert(str, "The str must be passed.")
-interrupt = interrupt or false
-local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize*2+2)
-wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Output(buf:topointer(), toint[interrupt]) == 1)
+	assert(str, "The str must be passed.")
+	interrupt = interrupt or false
+	return (tolkdll.Tolk_Output(wstring(str), cBool(interrupt)) == 1)
 end
 
 --  Name:         Tolk_Speak
@@ -148,12 +154,9 @@ end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Speak:types("int", "pointer", "int")
 function Tolk.Speak(str, interrupt)
-assert(str, "The str must be passed.")
-interrupt = interrupt or false
-local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize*2+2)
-wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Speak(buf:topointer(), toint[interrupt]) == 1)
+	assert(str, "The str must be passed.")
+	interrupt = interrupt or false
+	return (tolkdll.Tolk_Speak(wstring(str), cBool(interrupt)) == 1)
 end
 
 --  Name:         Tolk_Braille
@@ -162,11 +165,8 @@ end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Braille:types("int", "pointer")
 function Tolk.Braille(str)
-assert(str, "The str must be passed.")
-local presize = wkernel.MultiByteToWideChar(65001, 0, str, -1, NULL, 0)
-local buf = alien.buffer(presize*2+2)
-wkernel.MultiByteToWideChar(65001, 0, str, -1, buf:topointer(), presize)
-return (tolkdll.Tolk_Braille(buf:topointer()) == 1)
+	assert(str, "The str must be passed.")
+	return (tolkdll.Tolk_Braille(wstring(str)) == 1)
 end
 
 --  Name:         Tolk_IsSpeaking
@@ -182,10 +182,6 @@ function Tolk.IsSpeaking() return (tolkdll.Tolk_IsSpeaking() == 1) end
 --  Returns:      true on success, false otherwise.
 tolkdll.Tolk_Silence:types("int")
 function Tolk.Silence() return (tolkdll.Tolk_Silence() == 1) end
-
--- Let make Tolk table more friendly
--- You will be able to call raw Tolk dll functions if needed. There are already asigned any type for each of.
-Tolk.raw = tolkdll
 
 
 return Tolk
