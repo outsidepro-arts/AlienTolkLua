@@ -1,3 +1,4 @@
+package.path = "..\\?.lua;"..package.path
 tolk = require "tolk"
 gui = require "iuplua"
 gui.SetGlobal("UTF8MODE", "Yes")

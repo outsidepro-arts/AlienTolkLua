@@ -1,3 +1,4 @@
+package.path = "..\\?.lua;"..package.path
 tolk = require "tolk"
 
 answerMap = setmetatable(
